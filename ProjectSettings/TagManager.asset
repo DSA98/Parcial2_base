@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - KillVolume
+  - Hazard
   layers:
   - Default
   - TransparentFX

@@ -2,34 +2,34 @@
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
-public class Bullet : MonoBehaviour
+public abstract class Bullet : MonoBehaviour
 {
     [SerializeField]
-    private int damage = 1;
+    protected int damage = 1;
 
-    private Collider2D myCollider;
-    private Rigidbody2D myRigidbody;
+    protected Collider2D myCollider;
+    [SerializeField]
+    protected Rigidbody2D myRigidbody;
 
     [SerializeField]
-    private float force = 10F;
+    protected float force = 10F;
 
     [SerializeField]
-    private float autoDestroyTime = 5F;
+    protected float autoDestroyTime = 5F;
 
     // Use this for initialization
-    private void Start()
+    protected virtual void Start()
     {
         myCollider = GetComponent<Collider2D>();
-        myRigidbody = GetComponent<Rigidbody2D>();
 
-        myRigidbody.AddForce(transform.up * force, ForceMode2D.Impulse);
-
-        Invoke("AutoDestroy", autoDestroyTime);
     }
 
-    private void AutoDestroy()
+    protected abstract void AutoDestroy();
+
+    public abstract void AddImpulse();
+
+    public void StartAutoDestroy()
     {
-        Destroy(gameObject);
-        Destroy(gameObject);
+        Invoke("AutoDestroy", autoDestroyTime);
     }
 }

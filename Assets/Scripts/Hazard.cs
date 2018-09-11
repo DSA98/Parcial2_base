@@ -1,41 +1,43 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
-[RequireComponent(typeof(Rigidbody2D))]
-public class Hazard : MonoBehaviour
+public class Hazard : HazardObjects
 {
-    private Collider2D myCollider;
-    private object myRigidbody;
-
-    [SerializeField]
-    private float resistance = 1F;
-
-    private float spinTime = 1F;
-
-    // Use this for initialization
-    protected void Start()
+    protected override void OnCollisionEnter2D(Collision2D collision)
     {
-        myCollider = GetComponent<Collider2D>();
-        myRigidbody = GetComponent<Rigidbody2D>();
-    }
-
-    protected void OnCollisionEnter2D(Collision2D collision)
-    {
+        base.OnCollisionEnter2D(collision);
         if (collision.gameObject.GetComponent<Bullet>() != null)
         {
-            //TODO: Make this to reduce damage using Bullet.damage attribute
-            resistance -= 1;
-
-            if (resistance == 0)
+            if (collision.gameObject.GetComponent<Bullet>() is NormalBullet)
             {
-                OnHazardDestroyed();
+                resistance -= 1;
+
+                if (resistance == 0)
+                {
+                    OnHazardDestroyed();
+                }
+                /*if (SingletonReferee.RefereeInstance != null)
+                {
+                    SingletonReferee.RefereeInstance.AddScore();
+                }*/
+            }
+        }
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            if (collision.gameObject.GetComponent<PlayerController>() != null)
+            {
+                if (!collision.gameObject.GetComponent<PlayerController>().CurrentShieldActtive)
+                {
+                    collision.gameObject.GetComponent<PlayerController>().ReduceHealth(damageToPlayer);
+                    OnHazardDestroyed();
+                }
             }
         }
     }
 
-    protected void OnHazardDestroyed()
+    protected override void OnHazardDestroyed()
     {
-        //TODO: GameObject should spin for 'spinTime' secs. then disappear
-        Destroy(gameObject);
+        HazardsPool.HazardPoolInstance.ReturnGameObjectHazard(gameObject);
     }
 }

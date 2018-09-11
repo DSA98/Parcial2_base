@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Collider2D))]
 public class PlayerController : MonoBehaviour
@@ -12,8 +13,34 @@ public class PlayerController : MonoBehaviour
     private float coolDownTime = 0.5F;
     private Collider2D myCollider;
 
+    private bool currentShieldActtive = false;
+
+    private float health = 100;
     [SerializeField]
+    Slider mHealthBar;
+
+    /*[SerializeField]
     private Object bulletGO;
+    [SerializeField]
+    private Object bulletApGO;*/
+
+    [SerializeField]
+    GameObject barrier;
+
+    PowerUpDecorator mPowerUps;
+
+    public bool CurrentShieldActtive
+    {
+        get
+        {
+            return currentShieldActtive;
+        }
+
+        set
+        {
+            currentShieldActtive = value;
+        }
+    }
 
     protected bool InsideCamera(bool positive)
     {
@@ -29,6 +56,8 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         myCollider = GetComponent<Collider2D>();
+        mHealthBar.value = health;
+        mPowerUps = GetComponent<PowerUpDecorator>();
     }
 
     // Update is called once per frame
@@ -41,12 +70,37 @@ public class PlayerController : MonoBehaviour
             transform.position += new Vector3(movementFactor * speed * Time.deltaTime, 0F, 0F);
         }
 
-        if (bulletGO != null && Input.GetAxis("Jump") != 0 && canFire)
+        if (/*bulletGO != null &&*/ Input.GetAxis("Fire1") != 0 && canFire)
         {
-            Instantiate(bulletGO, transform.position + (transform.up * 0.5F), Quaternion.identity);
+            //Instantiate(bulletGO, transform.position + (transform.up * 0.5F), Quaternion.identity);
+            if (BulletsPool.BulletsPoolInstance != null)
+            {
+                GameObject cloneNormalBullet = BulletsPool.BulletsPoolInstance.GetNormalBulletPool();
+                cloneNormalBullet.SetActive(true);
+                cloneNormalBullet.transform.position = transform.position + (transform.up * 0.5F);
+                cloneNormalBullet.transform.rotation = Quaternion.identity;
+                cloneNormalBullet.GetComponent<Bullet>().AddImpulse();
+                cloneNormalBullet.GetComponent<Bullet>().StartAutoDestroy();
+            }
             print("Fiyah!");
             StartCoroutine("FireCR");
         }
+        if (/*bulletApGO != null &&*/ Input.GetAxis("Fire2") != 0 && canFire)
+        {
+            //Instantiate(bulletApGO, transform.position + (transform.up * 0.5F), Quaternion.identity);
+            if (BulletsPool.BulletsPoolInstance != null)
+            {
+                GameObject cloneApBullet = BulletsPool.BulletsPoolInstance.GetApBulletPool();
+                cloneApBullet.SetActive(true);
+                cloneApBullet.transform.position = transform.position + (transform.up * 0.5F);
+                cloneApBullet.transform.rotation = Quaternion.identity;
+                cloneApBullet.GetComponent<Bullet>().AddImpulse();
+                cloneApBullet.GetComponent<Bullet>().StartAutoDestroy();
+            }
+            print("Fiyah!");
+            StartCoroutine("FireCR");
+        }
+        GetPowerUpFromDecorator();
     }
 
     private void OnDestroy()
@@ -59,8 +113,7 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.GetComponent<Hazard>() != null)
         {
-            Time.timeScale = 0F;
-            print("Game Over");
+            SingletonReferee.RefereeInstance.DefeatCondition();
         }
     }
 
@@ -69,5 +122,40 @@ public class PlayerController : MonoBehaviour
         canFire = false;
         yield return new WaitForSeconds(coolDownTime);
         canFire = true;
+    }
+
+    public void ReduceHealth(float _damageTaken)
+    {
+        health -= _damageTaken;
+        mHealthBar.value = health;
+        if (health <= 0)
+        {
+            SingletonReferee.RefereeInstance.DefeatCondition();
+        }
+    }
+
+    private void GetPowerUpFromDecorator()
+    {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            mPowerUps.GetPowerUp(1);
+        }
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            mPowerUps.GetPowerUp(2);
+        }
+    }
+
+    public void ActivateShieldPowerUp()
+    {
+        currentShieldActtive = true;
+        barrier.SetActive(true);
+        Invoke("InactivateShieldPowerUp", 5f);
+    }
+
+    public void InactivateShieldPowerUp()
+    {
+        currentShieldActtive = false;
+        barrier.SetActive(false);
     }
 }
